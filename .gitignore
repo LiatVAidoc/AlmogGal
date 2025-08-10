@@ -1,6 +1,7 @@
 backend/secrets.json
 backend/node/secrets.json
 backend/python/secrets.json
+.env
 
 # Node
 node_modules/
