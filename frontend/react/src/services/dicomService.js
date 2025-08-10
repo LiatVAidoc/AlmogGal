@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // You can configure the base URL based on your backend setup
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
 const dicomService = {
   async getMetadata(s3Path) {

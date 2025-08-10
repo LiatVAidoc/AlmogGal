@@ -19,13 +19,21 @@ const S3PathForm = ({ onSubmit, loading, error }) => {
       return "S3 path is required";
     }
 
-    // Basic S3 path validation
-    if (!path.startsWith("s3://")) {
-      return "S3 path must start with s3://";
-    }
-
-    if (path.length < 10) {
-      return "S3 path seems too short";
+    // Accept both full s3:// URLs and relative S3 paths
+    if (path.startsWith("s3://")) {
+      // Full S3 URL format
+      if (path.length < 10) {
+        return "S3 path seems too short";
+      }
+    } else {
+      // Relative S3 path format (like: bucket-name/path/to/file)
+      if (path.length < 5) {
+        return "S3 path seems too short";
+      }
+      // Check if it contains at least one slash (bucket/path structure)
+      if (!path.includes("/")) {
+        return "S3 path should include bucket and path structure";
+      }
     }
 
     return "";
@@ -65,12 +73,13 @@ const S3PathForm = ({ onSubmit, loading, error }) => {
           <TextField
             fullWidth
             label="S3 Path"
-            placeholder="s3://bucket-name/path/to/dicom/file"
+            placeholder="bucket-name/path/to/file.dcm or s3://bucket-name/path/to/file"
             value={s3Path}
             onChange={handlePathChange}
             error={!!validationError}
             helperText={
-              validationError || "Enter the S3 path to your DICOM file"
+              validationError ||
+              "Enter the S3 path to your DICOM file (with or without s3:// prefix)"
             }
             disabled={loading}
             sx={{ mb: 2 }}
