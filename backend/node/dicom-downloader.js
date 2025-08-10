@@ -64,8 +64,6 @@ async function downloadDicomFile(s3Path) {
       throw new Error("No data received from S3");
     }
 
-    console.log("response.Body type:", response.Body);
-
     // Convert the response body to a buffer using Node.js streams
     const nodeStream =
       response.Body instanceof Readable
