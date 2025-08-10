@@ -2,7 +2,8 @@ import fs from "fs";
 import path from "path";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { fileURLToPath } from "url";
-import * as dicomParser from "dicom-parser";
+import { Readable } from "stream";
+import dicomParser from "dicom-parser";
 
 // Define __dirname for ES modules
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -63,18 +64,23 @@ async function downloadDicomFile(s3Path) {
       throw new Error("No data received from S3");
     }
 
-    // Convert the response body to a buffer
+    console.log("response.Body type:", response.Body);
+
+    // Convert the response body to a buffer using Node.js streams
+    const nodeStream =
+      response.Body instanceof Readable
+        ? response.Body
+        : Readable.fromWeb(response.Body.transformToWebStream());
+
     const chunks = [];
-    const reader = response.Body.transformToByteArray();
-
-    for await (const chunk of reader) {
-      chunks.push(chunk);
-    }
-
-    const buffer = Buffer.concat(chunks);
-
-    // Parse the DICOM file and extract metadata
-    return parseDicomFile(buffer);
+    return new Promise((resolve, reject) => {
+      nodeStream.on("data", (chunk) => chunks.push(chunk));
+      nodeStream.on("end", () => {
+        const buffer = Buffer.concat(chunks);
+        resolve(parseDicomFile(buffer));
+      });
+      nodeStream.on("error", reject);
+    });
   } catch (error) {
     if (error.name === "NoSuchKey") {
       throw new Error(`DICOM file not found at path: ${s3Path}`);
